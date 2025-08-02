@@ -1,9 +1,9 @@
 [project]
 name = "marksum"
-version = "0.1.1"
+version = "0.1.2"
 description = ""
 authors = [
-    {name = "Nimish_Kumar",email = "nimishkumar.work@gmailcom"}
+    {name = "Nimish Kumar",email = "nimishkumar.work@gmail.com"}
 ]
 readme = "README.md"
 requires-python = ">=3.9,<4.0"
