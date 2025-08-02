@@ -1,3 +1,4 @@
+
 from rich.console import Console
 from rich.text import Text
 from string import Template
@@ -6,6 +7,7 @@ import importlib.resources
 import typer
 from marksum.llm_provider import summarize_with_gemini
 from rich.markdown import Markdown
+from marksum import __version__
 
 app = typer.Typer(help="Marksum: A CLI tool to summarize Markdown files using LLMs like Gemini.")
 
@@ -78,9 +80,21 @@ def summarize(
 
 
 # Version callback for Typer
+def version_callback(value: bool):
+    if value:
+        print(f"marksum v{__version__}")
+        raise typer.Exit()
+
 @app.callback()
 def main(
-    version: bool = typer.Option(None, "--version", callback=lambda value: print("marksum v0.1.1") if value else None, is_eager=True, help="Show the version and exit.")
+    version: bool = typer.Option(
+        None,
+        "--version",
+        "-v",
+        help="Show the version and exit.",
+        callback=version_callback,
+        is_eager=True,
+    )
 ):
     """
     Marksum CLI - Summarize Markdown files using Gemini AI.
