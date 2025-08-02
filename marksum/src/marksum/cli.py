@@ -76,5 +76,15 @@ def summarize(
         except Exception as e:
             console.print(f"[bold red]Error processing {file_path.name}:[/bold red] {e}")
 
+
+# Version callback for Typer
+@app.callback()
+def main(
+    version: bool = typer.Option(None, "--version", callback=lambda value: print("marksum v0.1.1") if value else None, is_eager=True, help="Show the version and exit.")
+):
+    """
+    Marksum CLI - Summarize Markdown files using Gemini AI.
+    """
+
 if __name__ == "__main__":
     app()
