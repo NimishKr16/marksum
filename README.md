@@ -58,11 +58,25 @@ GOOGLE_API_KEY=your_api_key_here
 
 ### Option 2: Set as environment variable
 
+#### On macOS/Linux (bash/zsh):
+
 ```bash
 export GOOGLE_API_KEY=your_api_key_here
 ```
 
-You can persist this in your shell profile (`.bashrc`, `.zshrc`, etc.).
+#### On Windows (Command Prompt):
+
+```cmd
+set GOOGLE_API_KEY=your_api_key_here
+```
+
+#### On Windows (PowerShell):
+
+```powershell
+$env:GOOGLE_API_KEY="your_api_key_here"
+```
+
+You can persist this in your shell profile (`.bashrc`, `.zshrc`, PowerShell profile, etc.).
 
 ---
 
