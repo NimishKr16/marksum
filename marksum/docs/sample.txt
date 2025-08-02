@@ -1,0 +1,10 @@
+Artificial Intelligence (AI) is a branch of computer science focused on creating smart machines.  
+AI systems can perform tasks that typically require human intelligence.  
+Machine learning is a subset of AI that enables systems to learn from data.  
+Natural language processing allows computers to understand human language.  
+AI is used in various industries, including healthcare and finance.  
+Self-driving cars rely heavily on AI technologies for navigation.  
+Voice assistants like Siri and Alexa are powered by AI algorithms.  
+AI can help detect fraud in banking transactions.  
+Robotics often incorporates AI for autonomous decision-making.  
+Ethical considerations are important in the development of AI systems.  

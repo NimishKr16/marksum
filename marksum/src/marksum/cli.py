@@ -1,47 +1,80 @@
+from rich.console import Console
+from rich.text import Text
 from string import Template
 from pathlib import Path
+import importlib.resources
 import typer
 from marksum.llm_provider import summarize_with_gemini
+from rich.markdown import Markdown
 
-app = typer.Typer()
+app = typer.Typer(help="Marksum: A CLI tool to summarize Markdown files using LLMs like Gemini.")
 
-@app.command()
+@app.command(help="Summarize one or more Markdown files using AI. Supports TL;DR or bullet-point formats.")
 def summarize(
     path: str,
     summary: bool = typer.Option(False, help="Generate TL;DR summary"),
     bullets: bool = typer.Option(False, help="Generate bullet points"),
-    output: str = typer.Option(None, help="Optional output file or directory")
+    output: str = typer.Option(None, help="Output file (for single input) or output directory (for folders)")
 ):
-    typer.echo(f"Processing {path}")
-    typer.echo(f"Options -> summary: {summary}, bullets: {bullets}, output: {output}")
-    # Step 1: Read the Markdown file
-    file_path = Path(path)
-    if not file_path.exists() or not file_path.is_file():
-        typer.echo("Error: File not found.")
-        raise typer.Exit(code=1)
+    console = Console()
+    console.rule(f"[bold blue]Marksum: Markdown Summarizer[/bold blue]")
+    console.print(f"[cyan]Path:[/cyan] {path}")
+    console.print(f"[cyan]Options:[/cyan] summary={summary}, bullets={bullets}, output={output}")
 
-    markdown_text = file_path.read_text(encoding="utf-8")
-    typer.echo(f"Loaded {len(markdown_text.split())} words from {file_path.name}")
-
-    # Step 2: Load and fill prompt template
-    template_path = Path(__file__).resolve().parent.parent / "prompts" / "default.txt"
-    if not template_path.exists():
-        typer.echo("Prompt template not found.")
-        raise typer.Exit(code=1)
-
-    template_str = template_path.read_text(encoding="utf-8")
-    prompt = Template(template_str).substitute(markdown=markdown_text)
-    typer.echo("Prompt prepared successfully.")
-
-    typer.echo("Sending prompt to Gemini...")
-    summary_text = summarize_with_gemini(prompt)
-
-    # Output the result
-    if output:
-        Path(output).write_text(summary_text, encoding="utf-8")
-        typer.echo(f"Summary saved to {output}")
+    input_path = Path(path)
+    if input_path.is_dir():
+        markdown_files = list(input_path.rglob("*.md"))
+        if not markdown_files:
+            console.print(f"[bold yellow]Warning:[/bold yellow] No Markdown files found in directory.")
+            raise typer.Exit()
+    elif input_path.is_file():
+        markdown_files = [input_path]
     else:
-        typer.echo("\n" + summary_text)
+        console.print(f"[bold red]Error:[/bold red] Path not found: {path}")
+        raise typer.Exit(code=1)
+
+    for file_path in markdown_files:
+        try:
+            markdown_text = file_path.read_text(encoding="utf-8").strip()
+            if not markdown_text:
+                console.print(f"[yellow]Skipping empty file:[/yellow] {file_path}")
+                continue
+            console.print(f"[green]✓ Loaded {len(markdown_text.split())} words from [bold]{file_path.name}[/bold][/green]")
+
+            template_name = "bullets.txt" if bullets else "default.txt"
+            try:
+                template_str = importlib.resources.read_text("marksum.prompts", template_name, encoding="utf-8")
+            except (FileNotFoundError, ModuleNotFoundError) as e:
+                console.print(f"[bold red]Error:[/bold red] Prompt template not found: {e}")
+                raise typer.Exit(code=1)
+            prompt = Template(template_str).substitute(markdown=markdown_text)
+
+            try:
+                summary_text = summarize_with_gemini(prompt)
+            except Exception as e:
+                console.print(f"[bold red]Gemini API Error while processing {file_path.name}:[/bold red] {e}")
+                continue
+
+            if output:
+                output_path = Path(output)
+                if output_path.suffix == ".md" and len(markdown_files) > 1:
+                    console.print(f"[bold red]Error:[/bold red] Cannot write multiple summaries to a single file.")
+                    raise typer.Exit(code=1)
+                if len(markdown_files) == 1:
+                    output_path.write_text(summary_text, encoding="utf-8")
+                    console.print(f"[bold green]✓ Summary saved to [italic]{output_path}[/italic][/bold green]")
+                else:
+                    relative = file_path.relative_to(input_path)
+                    out_file = output_path / relative.with_suffix(".summary.md")
+                    out_file.parent.mkdir(parents=True, exist_ok=True)
+                    out_file.write_text(summary_text, encoding="utf-8")
+                    console.print(f"[green]✓ Saved:[/green] {out_file}")
+            else:
+                console.rule(f"[bold magenta]Summary for {file_path.name}[/bold magenta]")
+                console.print(Markdown(summary_text))
+
+        except Exception as e:
+            console.print(f"[bold red]Error processing {file_path.name}:[/bold red] {e}")
 
 if __name__ == "__main__":
     app()
