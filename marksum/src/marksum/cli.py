@@ -1,4 +1,3 @@
-
 from rich.console import Console
 from rich.text import Text
 from string import Template
@@ -11,13 +10,19 @@ from marksum import __version__
 
 app = typer.Typer(help="Marksum: A CLI tool to summarize Markdown files using LLMs like Gemini.")
 
-@app.command(help="Summarize one or more Markdown files using AI. Supports TL;DR or bullet-point formats.")
-def summarize(
-    path: str,
+@app.callback(invoke_without_command=True)
+def main(
+    ctx: typer.Context,
+    path: str = typer.Argument(..., help="Path to Markdown file or directory"),
     summary: bool = typer.Option(False, help="Generate TL;DR summary"),
     bullets: bool = typer.Option(False, help="Generate bullet points"),
-    output: str = typer.Option(None, help="Output file (for single input) or output directory (for folders)")
+    output: str = typer.Option(None, help="Output file (for single input) or output directory (for folders)"),
+    version: bool = typer.Option(False, "--version", "-v", help="Show the version and exit", is_eager=True)
 ):
+    if version:
+        print(f"marksum v{__version__}")
+        raise typer.Exit()
+
     console = Console()
     console.rule(f"[bold blue]Marksum: Markdown Summarizer[/bold blue]")
     console.print(f"[cyan]Path:[/cyan] {path}")
@@ -77,28 +82,6 @@ def summarize(
 
         except Exception as e:
             console.print(f"[bold red]Error processing {file_path.name}:[/bold red] {e}")
-
-
-# Version callback for Typer
-def version_callback(value: bool):
-    if value:
-        print(f"marksum v{__version__}")
-        raise typer.Exit()
-
-@app.callback()
-def main(
-    version: bool = typer.Option(
-        None,
-        "--version",
-        "-v",
-        help="Show the version and exit.",
-        callback=version_callback,
-        is_eager=True,
-    )
-):
-    """
-    Marksum CLI - Summarize Markdown files using Gemini AI.
-    """
 
 if __name__ == "__main__":
     app()
